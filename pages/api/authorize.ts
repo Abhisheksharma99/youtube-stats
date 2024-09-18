@@ -16,9 +16,9 @@ export default async function handler(
     scope: [
       "https://www.googleapis.com/auth/youtube.readonly",
       "https://www.googleapis.com/auth/spreadsheets",
-      "https://www.googleapis.com/auth/drive"
+      "https://www.googleapis.com/auth/drive",
+      "https://www.googleapis.com/auth/yt-analytics.readonly"
     ],
   });
-
   res.redirect(authUrl);
 }
