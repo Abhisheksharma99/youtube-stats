@@ -21,8 +21,8 @@ export async function GET(request: NextRequest, context: RouteContext) {
 
     return NextResponse.json({
       ...job,
-      hashtags: JSON.parse(job.hashtags),
-      metadata: JSON.parse(job.metadata),
+      hashtags: JSON.parse(job.hashtags) as string[],
+      metadata: JSON.parse(job.metadata) as Record<string, unknown>,
     });
   } catch (error) {
     console.error("Failed to get publish job:", error);
@@ -55,8 +55,8 @@ export async function PUT(request: NextRequest, context: RouteContext) {
 
     return NextResponse.json({
       ...job,
-      hashtags: JSON.parse(job.hashtags),
-      metadata: JSON.parse(job.metadata),
+      hashtags: JSON.parse(job.hashtags) as string[],
+      metadata: JSON.parse(job.metadata) as Record<string, unknown>,
     });
   } catch (error) {
     console.error("Failed to update publish job:", error);

@@ -21,8 +21,8 @@ export async function GET(request: NextRequest, context: RouteContext) {
 
     return NextResponse.json({
       ...run,
-      input: JSON.parse(run.input),
-      output: JSON.parse(run.output),
+      input: JSON.parse(run.input) as Record<string, unknown>,
+      output: JSON.parse(run.output) as Record<string, unknown>,
     });
   } catch (error) {
     console.error("Failed to get pipeline run:", error);
@@ -52,8 +52,8 @@ export async function PUT(request: NextRequest, context: RouteContext) {
 
     return NextResponse.json({
       ...run,
-      input: JSON.parse(run.input),
-      output: JSON.parse(run.output),
+      input: JSON.parse(run.input) as Record<string, unknown>,
+      output: JSON.parse(run.output) as Record<string, unknown>,
     });
   } catch (error) {
     console.error("Failed to update pipeline run:", error);

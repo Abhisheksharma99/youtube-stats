@@ -4,7 +4,14 @@ import { prisma } from "@/lib/services/db";
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { projectId, mediaId, platforms, caption, hashtags, scheduledAt } = body;
+    const { projectId, mediaId, platforms, caption, hashtags, scheduledAt } = body as {
+      projectId?: string;
+      mediaId?: string;
+      platforms?: string[];
+      caption?: string;
+      hashtags?: string[];
+      scheduledAt?: string;
+    };
 
     if (!projectId || !mediaId) {
       return NextResponse.json(
@@ -48,9 +55,9 @@ export async function POST(request: NextRequest) {
       )
     );
 
-    const parsed = publishJobs.map((j) => ({
+    const parsed = publishJobs.map((j: { hashtags: string }) => ({
       ...j,
-      hashtags: JSON.parse(j.hashtags),
+      hashtags: JSON.parse(j.hashtags) as string[],
     }));
 
     return NextResponse.json(parsed, { status: 201 });
@@ -81,10 +88,10 @@ export async function GET(request: NextRequest) {
       orderBy: { createdAt: "desc" },
     });
 
-    const parsed = jobs.map((j) => ({
+    const parsed = jobs.map((j: { hashtags: string; metadata: string }) => ({
       ...j,
-      hashtags: JSON.parse(j.hashtags),
-      metadata: JSON.parse(j.metadata),
+      hashtags: JSON.parse(j.hashtags) as string[],
+      metadata: JSON.parse(j.metadata) as Record<string, unknown>,
     }));
 
     return NextResponse.json(parsed);
