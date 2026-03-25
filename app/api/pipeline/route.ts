@@ -4,7 +4,11 @@ import { prisma } from "@/lib/services/db";
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { projectId, stages, config } = body;
+    const { projectId, stages, config } = body as {
+      projectId?: string;
+      stages?: string[];
+      config?: Record<string, unknown>;
+    };
 
     if (!projectId) {
       return NextResponse.json(
@@ -44,8 +48,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       {
         ...pipelineRun,
-        input: JSON.parse(pipelineRun.input),
-        output: JSON.parse(pipelineRun.output),
+        input: JSON.parse(pipelineRun.input) as Record<string, unknown>,
+        output: JSON.parse(pipelineRun.output) as Record<string, unknown>,
       },
       { status: 201 }
     );
@@ -75,10 +79,10 @@ export async function GET(request: NextRequest) {
       orderBy: { startedAt: "desc" },
     });
 
-    const parsed = runs.map((r) => ({
+    const parsed = runs.map((r: { input: string; output: string }) => ({
       ...r,
-      input: JSON.parse(r.input),
-      output: JSON.parse(r.output),
+      input: JSON.parse(r.input) as Record<string, unknown>,
+      output: JSON.parse(r.output) as Record<string, unknown>,
     }));
 
     return NextResponse.json(parsed);

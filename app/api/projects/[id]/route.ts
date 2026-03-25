@@ -29,8 +29,8 @@ export async function GET(request: NextRequest, context: RouteContext) {
 
     return NextResponse.json({
       ...project,
-      keywords: JSON.parse(project.keywords),
-      targetPlatforms: JSON.parse(project.targetPlatforms),
+      keywords: JSON.parse(project.keywords) as string[],
+      targetPlatforms: JSON.parse(project.targetPlatforms) as string[],
     });
   } catch (error) {
     console.error("Failed to get project:", error);
@@ -60,8 +60,8 @@ export async function PUT(request: NextRequest, context: RouteContext) {
 
     return NextResponse.json({
       ...project,
-      keywords: JSON.parse(project.keywords),
-      targetPlatforms: JSON.parse(project.targetPlatforms),
+      keywords: JSON.parse(project.keywords) as string[],
+      targetPlatforms: JSON.parse(project.targetPlatforms) as string[],
     });
   } catch (error) {
     console.error("Failed to update project:", error);

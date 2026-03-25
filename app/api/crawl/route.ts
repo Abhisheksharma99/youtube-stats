@@ -4,7 +4,12 @@ import { prisma } from "@/lib/services/db";
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { projectId, queries, sources, maxPages } = body;
+    const { projectId, queries, sources, maxPages } = body as {
+      projectId?: string;
+      queries?: string[];
+      sources?: string[];
+      maxPages?: number;
+    };
 
     if (!projectId) {
       return NextResponse.json(
