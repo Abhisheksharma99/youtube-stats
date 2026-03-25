@@ -6,10 +6,8 @@ import { AppShell } from '@/components/layout/app-shell'
 import {
   Plus,
   FolderKanban,
-  Youtube,
-  Instagram,
   Video,
-  Search,
+  Camera,
   Calendar,
 } from 'lucide-react'
 import type { Project, ProjectStatus } from '@/lib/types'
@@ -104,8 +102,8 @@ const progressColors: Record<ProjectStatus, string> = {
 }
 
 const platformIcons: Record<string, React.ReactNode> = {
-  youtube: <Youtube className="h-3.5 w-3.5 text-red-400" />,
-  instagram: <Instagram className="h-3.5 w-3.5 text-pink-400" />,
+  youtube: <Video className="h-3.5 w-3.5 text-red-400" />,
+  instagram: <Camera className="h-3.5 w-3.5 text-pink-400" />,
   tiktok: <Video className="h-3.5 w-3.5 text-cyan-400" />,
   x: <span className="text-[10px] font-bold text-zinc-300">𝕏</span>,
   linkedin: <span className="text-[10px] font-bold text-blue-400">in</span>,

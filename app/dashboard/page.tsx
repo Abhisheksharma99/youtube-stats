@@ -9,8 +9,7 @@ import {
   Plus,
   Images,
   Link2,
-  Youtube,
-  Instagram,
+  Camera,
   Clock,
   CheckCircle2,
   Upload,
@@ -96,8 +95,8 @@ const quickActions = [
 // ---------------------------------------------------------------------------
 
 const platformIcons: Record<string, React.ReactNode> = {
-  youtube: <Youtube className="h-4 w-4 text-red-400" />,
-  instagram: <Instagram className="h-4 w-4 text-pink-400" />,
+  youtube: <Video className="h-4 w-4 text-red-400" />,
+  instagram: <Camera className="h-4 w-4 text-pink-400" />,
   tiktok: <Video className="h-4 w-4 text-cyan-400" />,
   x: <span className="text-xs font-bold text-zinc-300">𝕏</span>,
   linkedin: <span className="text-xs font-bold text-blue-400">in</span>,

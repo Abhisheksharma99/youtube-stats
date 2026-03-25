@@ -20,7 +20,7 @@ interface ProjectActions {
 
 export const useProjectStore = create<ProjectState & ProjectActions>()(
   persist(
-    (set, get) => ({
+    (set) => ({
       projects: [],
       activeProjectId: null,
       isLoading: false,

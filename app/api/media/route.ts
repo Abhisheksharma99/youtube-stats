@@ -26,9 +26,9 @@ export async function GET(request: NextRequest) {
       prisma.generatedMedia.count({ where }),
     ]);
 
-    const parsed = media.map((m) => ({
+    const parsed = media.map((m: { metadata: string }) => ({
       ...m,
-      metadata: JSON.parse(m.metadata),
+      metadata: JSON.parse(m.metadata) as Record<string, unknown>,
     }));
 
     return NextResponse.json({
@@ -52,7 +52,14 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { projectId, type, prompt, modelUsed, resolution, duration } = body;
+    const { projectId, type, prompt, modelUsed, resolution, duration } = body as {
+      projectId?: string;
+      type?: string;
+      prompt?: string;
+      modelUsed?: string;
+      resolution?: string;
+      duration?: number;
+    };
 
     if (!projectId || !type) {
       return NextResponse.json(
@@ -88,7 +95,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       {
         ...media,
-        metadata: JSON.parse(media.metadata),
+        metadata: JSON.parse(media.metadata) as Record<string, unknown>,
       },
       { status: 201 }
     );

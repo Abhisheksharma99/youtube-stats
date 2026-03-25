@@ -27,7 +27,8 @@ const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
     },
     ref
   ) => {
-    const textareaId = id || React.useId();
+    const generatedId = React.useId();
+    const textareaId = id || generatedId;
     const [internalValue, setInternalValue] = React.useState(
       (defaultValue as string) ?? ''
     );

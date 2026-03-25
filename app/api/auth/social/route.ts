@@ -7,9 +7,9 @@ export async function GET() {
       orderBy: { createdAt: "desc" },
     });
 
-    const parsed = accounts.map((a) => ({
+    const parsed = accounts.map((a: { metadata: string; accessToken: string; refreshToken: string }) => ({
       ...a,
-      metadata: JSON.parse(a.metadata),
+      metadata: JSON.parse(a.metadata) as Record<string, unknown>,
       // Redact tokens in responses
       accessToken: a.accessToken ? "***" : "",
       refreshToken: a.refreshToken ? "***" : "",
@@ -28,7 +28,13 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { platform, accountName, accessToken, refreshToken, expiresAt } = body;
+    const { platform, accountName, accessToken, refreshToken, expiresAt } = body as {
+      platform?: string;
+      accountName?: string;
+      accessToken?: string;
+      refreshToken?: string;
+      expiresAt?: string;
+    };
 
     if (!platform || !accountName) {
       return NextResponse.json(
@@ -52,7 +58,7 @@ export async function POST(request: NextRequest) {
         ...account,
         accessToken: "***",
         refreshToken: "***",
-        metadata: JSON.parse(account.metadata),
+        metadata: JSON.parse(account.metadata) as Record<string, unknown>,
       },
       { status: 201 }
     );

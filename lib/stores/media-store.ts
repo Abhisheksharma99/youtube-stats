@@ -27,7 +27,7 @@ interface MediaActions {
 }
 
 export const useMediaStore = create<MediaState & MediaActions>()(
-  (set, get) => ({
+  (set) => ({
     generatedMedia: [],
     selectedMedia: [],
     generationQueue: [],

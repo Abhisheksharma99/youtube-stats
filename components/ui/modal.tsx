@@ -39,7 +39,7 @@ const ModalContent = React.forwardRef<
   React.ComponentRef<typeof DialogPrimitive.Content>,
   ModalContentProps
 >(({ className, children, showCloseButton = true, ...props }, ref) => {
-  const [open, setOpen] = React.useState(true);
+  const [open] = React.useState(true);
 
   return (
     <ModalPortal forceMount>

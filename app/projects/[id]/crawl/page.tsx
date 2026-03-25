@@ -154,7 +154,7 @@ const tabs = [
 
 export default function CrawlPage() {
   const params = useParams<{ id: string }>()
-  const projectId = params.id
+  const projectId = params?.id ?? ''
 
   const [keywords, setKeywords] = useState<string[]>(initialKeywords)
   const [keywordInput, setKeywordInput] = useState('')

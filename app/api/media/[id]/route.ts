@@ -21,11 +21,11 @@ export async function GET(request: NextRequest, context: RouteContext) {
 
     return NextResponse.json({
       ...media,
-      metadata: JSON.parse(media.metadata),
-      publishJobs: media.publishJobs.map((j) => ({
+      metadata: JSON.parse(media.metadata) as Record<string, unknown>,
+      publishJobs: media.publishJobs.map((j: { hashtags: string; metadata: string }) => ({
         ...j,
-        hashtags: JSON.parse(j.hashtags),
-        metadata: JSON.parse(j.metadata),
+        hashtags: JSON.parse(j.hashtags) as string[],
+        metadata: JSON.parse(j.metadata) as Record<string, unknown>,
       })),
     });
   } catch (error) {
@@ -59,7 +59,7 @@ export async function PUT(request: NextRequest, context: RouteContext) {
 
     return NextResponse.json({
       ...media,
-      metadata: JSON.parse(media.metadata),
+      metadata: JSON.parse(media.metadata) as Record<string, unknown>,
     });
   } catch (error) {
     console.error("Failed to update media:", error);
