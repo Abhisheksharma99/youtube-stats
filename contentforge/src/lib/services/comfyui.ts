@@ -14,46 +14,87 @@ async function getComfyUIUrl(): Promise<string> {
   return `http://${host}:${port}`
 }
 
-function buildWanWorkflow(prompt: string, resolution: string = '1280x720', steps: number = 30): Record<string, unknown> {
+function buildWanWorkflow(prompt: string, resolution: string = '832x480', steps: number = 25): Record<string, unknown> {
   const [width, height] = resolution.split('x').map(Number)
   return {
+    // Load Wan UNet (GGUF quantized for consumer GPUs)
     "1": {
-      "class_type": "WanVideoModelLoader",
-      "inputs": { "model_name": "wan2.1_t2v_14B_fp16.safetensors" }
+      "class_type": "UnetLoaderGGUF",
+      "inputs": { "unet_name": "wan2.1_t2v_14B_Q4_K_M.gguf" }
     },
+    // Load T5-XXL text encoder
     "2": {
-      "class_type": "WanVideoTextEncode",
+      "class_type": "CLIPLoader",
+      "inputs": {
+        "clip_name": "t5xxl_fp8_e4m3fn.safetensors",
+        "type": "wan"
+      }
+    },
+    // Positive prompt
+    "3": {
+      "class_type": "CLIPTextEncode",
       "inputs": {
         "text": prompt,
-        "model": ["1", 0]
+        "clip": ["2", 0]
       }
     },
-    "3": {
-      "class_type": "WanVideoSampler",
+    // Negative prompt
+    "4": {
+      "class_type": "CLIPTextEncode",
       "inputs": {
-        "model": ["1", 0],
-        "positive": ["2", 0],
-        "width": width || 1280,
-        "height": height || 720,
-        "num_frames": 81,
+        "text": "blurry, low quality, distorted, watermark, text, deformed",
+        "clip": ["2", 0]
+      }
+    },
+    // Empty latent video
+    "5": {
+      "class_type": "EmptyWanLatentVideo",
+      "inputs": {
+        "width": width || 832,
+        "height": height || 480,
+        "length": 81,
+        "batch_size": 1
+      }
+    },
+    // KSampler
+    "6": {
+      "class_type": "KSampler",
+      "inputs": {
+        "seed": Math.floor(Math.random() * 2147483647),
         "steps": steps,
         "cfg": 6.0,
-        "seed": Math.floor(Math.random() * 2147483647),
-        "scheduler": "euler",
+        "sampler_name": "euler",
+        "scheduler": "normal",
+        "denoise": 1.0,
+        "model": ["1", 0],
+        "positive": ["3", 0],
+        "negative": ["4", 0],
+        "latent_image": ["5", 0]
       }
     },
-    "4": {
-      "class_type": "WanVideoVAEDecode",
+    // Load VAE
+    "7": {
+      "class_type": "VAELoader",
+      "inputs": { "vae_name": "wan_2.1_vae.safetensors" }
+    },
+    // Decode latent to frames
+    "8": {
+      "class_type": "VAEDecode",
       "inputs": {
-        "samples": ["3", 0],
-        "model": ["1", 0]
+        "samples": ["6", 0],
+        "vae": ["7", 0]
       }
     },
-    "5": {
-      "class_type": "SaveVideo",
+    // Save as animated WEBP (compatible with ComfyUI core)
+    "9": {
+      "class_type": "SaveAnimatedWEBP",
       "inputs": {
         "filename_prefix": "contentforge",
-        "video": ["4", 0]
+        "fps": 16,
+        "lossless": false,
+        "quality": 85,
+        "method": "default",
+        "images": ["8", 0]
       }
     }
   }
@@ -96,8 +137,8 @@ export async function generateVideoWithComfyUI(
     const clientId = uuidv4()
 
     // Build workflow
-    const resolution = media.resolution || '1280x720'
-    const steps = 30
+    const resolution = media.resolution || '832x480'
+    const steps = 25
     const workflow = buildWanWorkflow(media.prompt, resolution, steps)
 
     emitProgress('Submitting workflow to ComfyUI...', 5)
@@ -148,19 +189,23 @@ export async function generateVideoWithComfyUI(
 
             // Get the output
             const historyRes = await fetch(`${baseUrl}/history/${prompt_id}`)
-            const history = await historyRes.json() as Record<string, { outputs?: Record<string, { videos?: Array<{ filename: string; subfolder: string; type: string }> }> }>
+            type OutputFile = { filename: string; subfolder: string; type: string }
+            type NodeOutput = { videos?: OutputFile[]; images?: OutputFile[] }
+            const history = await historyRes.json() as Record<string, { outputs?: Record<string, NodeOutput> }>
             const outputs = history[prompt_id]?.outputs
 
             if (outputs) {
-              // Find video output
+              // Find video/animated output (SaveAnimatedWEBP uses 'images', VHS uses 'videos')
               for (const nodeOutput of Object.values(outputs)) {
-                if (nodeOutput.videos && nodeOutput.videos.length > 0) {
-                  const video = nodeOutput.videos[0]
+                const files = nodeOutput.videos || nodeOutput.images
+                if (files && files.length > 0) {
+                  const video = files[0]
                   const videoUrl = `${baseUrl}/view?filename=${video.filename}&subfolder=${video.subfolder}&type=${video.type}`
 
                   // Download video
                   await fs.mkdir(GENERATED_DIR, { recursive: true })
-                  const filePath = path.join(GENERATED_DIR, `${mediaId}.mp4`)
+                  const ext = path.extname(video.filename) || '.webp'
+                  const filePath = path.join(GENERATED_DIR, `${mediaId}${ext}`)
                   const videoRes = await fetch(videoUrl)
                   const buffer = Buffer.from(await videoRes.arrayBuffer())
                   await fs.writeFile(filePath, buffer)
@@ -170,7 +215,7 @@ export async function generateVideoWithComfyUI(
                     data: {
                       status: 'completed',
                       progress: 100,
-                      filePath: `/generated/${mediaId}.mp4`,
+                      filePath: `/generated/${mediaId}${ext}`,
                       metadata: JSON.stringify({
                         comfyui_prompt_id: prompt_id,
                         generatedAt: new Date().toISOString(),
