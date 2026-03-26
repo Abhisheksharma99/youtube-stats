@@ -101,6 +101,9 @@ export default function SettingsPage() {
   const [comfyTestResult, setComfyTestResult] = useState<
     "idle" | "testing" | "success" | "failed"
   >("idle");
+  const [portError, setPortError] = useState("");
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [showSaveToast, setShowSaveToast] = useState(false);
 
   const { data: loadedSettings } = useQuery<AppSettings>({
     queryKey: ["settings"],
@@ -141,6 +144,8 @@ export default function SettingsPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["settings"] });
+      setShowSaveToast(true);
+      setTimeout(() => setShowSaveToast(false), 3000);
     },
   });
 
@@ -340,12 +345,34 @@ export default function SettingsPage() {
                     </label>
                     <input
                       type="number"
+                      min={1}
+                      max={65535}
                       value={settings.comfyui.port}
-                      onChange={(e) =>
-                        updateNested("comfyui", "port", Number(e.target.value))
-                      }
-                      className="mt-1.5 h-10 w-full rounded-lg border border-zinc-700 bg-zinc-800 px-3 text-sm text-zinc-200 focus:border-indigo-500 focus:outline-none"
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (val === "") {
+                          updateNested("comfyui", "port", 0);
+                          setPortError("Port is required");
+                          return;
+                        }
+                        const num = Number(val);
+                        if (!Number.isInteger(num) || num < 1 || num > 65535) {
+                          setPortError("Port must be between 1 and 65535");
+                        } else {
+                          setPortError("");
+                        }
+                        updateNested("comfyui", "port", num);
+                      }}
+                      className={cn(
+                        "mt-1.5 h-10 w-full rounded-lg border bg-zinc-800 px-3 text-sm text-zinc-200 focus:outline-none",
+                        portError
+                          ? "border-red-500 focus:border-red-500"
+                          : "border-zinc-700 focus:border-indigo-500"
+                      )}
                     />
+                    {portError && (
+                      <p className="mt-1 text-xs text-red-400">{portError}</p>
+                    )}
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
@@ -527,8 +554,14 @@ export default function SettingsPage() {
             {/* Save button */}
             <div className="mt-8 flex items-center gap-3 border-t border-zinc-800 pt-5">
               <button
-                onClick={() => saveMutation.mutate()}
-                disabled={saveMutation.isPending}
+                onClick={() => {
+                  if (activeSection === "apiKeys") {
+                    setShowConfirmDialog(true);
+                  } else {
+                    saveMutation.mutate();
+                  }
+                }}
+                disabled={saveMutation.isPending || !!portError}
                 className="flex items-center gap-2 rounded-lg bg-indigo-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-indigo-500 disabled:opacity-50 transition-colors"
               >
                 {saveMutation.isPending ? (
@@ -554,6 +587,45 @@ export default function SettingsPage() {
           </div>
         </div>
       </div>
+      {/* Confirmation dialog for API keys */}
+      {showConfirmDialog && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="w-full max-w-sm rounded-xl border border-zinc-800 bg-zinc-900 p-6 shadow-2xl">
+            <h3 className="text-lg font-semibold text-zinc-100">
+              Confirm Save
+            </h3>
+            <p className="mt-2 text-sm text-zinc-400">
+              Are you sure you want to update your API keys? This will overwrite
+              existing keys.
+            </p>
+            <div className="mt-5 flex items-center justify-end gap-3">
+              <button
+                onClick={() => setShowConfirmDialog(false)}
+                className="rounded-lg px-4 py-2 text-sm font-medium text-zinc-400 hover:text-zinc-200 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  setShowConfirmDialog(false);
+                  saveMutation.mutate();
+                }}
+                className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-500 transition-colors"
+              >
+                Confirm Save
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Success toast */}
+      {showSaveToast && (
+        <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2 rounded-lg border border-emerald-800/50 bg-emerald-950/90 px-4 py-3 text-sm text-emerald-400 shadow-lg backdrop-blur-sm animate-fade-in">
+          <CheckCircle2 className="h-4 w-4" />
+          Settings saved successfully
+        </div>
+      )}
     </AppShell>
   );
 }

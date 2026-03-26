@@ -289,11 +289,30 @@ export default function PublishPage({
             {scheduleEnabled ? "Schedule Publish" : "Publish Now"}
           </button>
 
-          {publishMutation.isSuccess && (
-            <span className="flex items-center gap-1.5 text-sm text-emerald-400">
-              <CheckCircle2 className="h-4 w-4" />
-              Published successfully!
+          {scheduleInPast && (
+            <span className="flex items-center gap-1.5 text-sm text-amber-400">
+              <AlertCircle className="h-4 w-4" />
+              Scheduled time is in the past
             </span>
+          )}
+
+          {publishMutation.isSuccess && (
+            <div className="flex flex-col gap-1">
+              <span className="flex items-center gap-1.5 text-sm text-emerald-400">
+                <CheckCircle2 className="h-4 w-4" />
+                Published successfully!
+              </span>
+              {publishMutation.data?.url && (
+                <a
+                  href={publishMutation.data.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-xs text-indigo-400 hover:text-indigo-300 underline transition-colors"
+                >
+                  {publishMutation.data.url}
+                </a>
+              )}
+            </div>
           )}
           {publishMutation.isError && (
             <span className="flex items-center gap-1.5 text-sm text-red-400">
