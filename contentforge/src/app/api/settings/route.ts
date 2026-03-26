@@ -4,25 +4,12 @@ export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
 import { getAllSettings, setSetting } from '@/lib/services/settings';
 
-const SENSITIVE_KEYS = ['api_key', 'secret', 'token', 'password', 'credential'];
-
-function redactValue(key: string, value: string): string {
-  const lower = key.toLowerCase();
-  if (SENSITIVE_KEYS.some((k) => lower.includes(k))) {
-    if (value.length <= 8) return '••••••••';
-    return value.slice(0, 4) + '••••' + value.slice(-4);
-  }
-  return value;
-}
+// getAllSettings already handles redaction internally
 
 export async function GET() {
   try {
     const settings = await getAllSettings();
-    const redacted = settings.map((s: any) => ({
-      ...s,
-      value: redactValue(s.key, s.value),
-    }));
-    return NextResponse.json(redacted);
+    return NextResponse.json(settings);
   } catch (error) {
     console.error('Failed to fetch settings:', error);
     return NextResponse.json({ error: 'Failed to fetch settings' }, { status: 500 });

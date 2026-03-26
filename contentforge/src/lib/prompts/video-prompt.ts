@@ -14,7 +14,7 @@ Guidelines:
 
 Output a single, optimized video generation prompt.`
 
-export function buildVideoPromptPrompt(
+export function buildUserPrompt(
   topic: string,
   script: string,
   resolution: string

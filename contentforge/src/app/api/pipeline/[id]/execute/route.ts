@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/services/db';
 import { executePipeline } from '@/lib/services/pipeline-executor';
@@ -14,8 +15,16 @@ export async function POST(
       return NextResponse.json({ error: 'Pipeline run not found' }, { status: 404 });
     }
 
+    // Parse project info from the run
+    const project = await prisma.project.findUnique({ where: { id: run.projectId } });
+    const keywords = project ? JSON.parse(project.keywords || '[]') : [];
+
     // Fire-and-forget pipeline execution
-    executePipeline(id).catch((err) =>
+    executePipeline({
+      projectId: run.projectId,
+      topic: project?.name || '',
+      keywords,
+    }).catch((err) =>
       console.error(`Pipeline execution failed for run ${id}:`, err)
     );
 

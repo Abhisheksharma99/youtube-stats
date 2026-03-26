@@ -1,17 +1,6 @@
 import type { Metadata } from 'next'
-import { Inter, JetBrains_Mono } from 'next/font/google'
 import { QueryProvider } from '@/lib/hooks/query-provider'
 import './globals.css'
-
-const inter = Inter({
-  variable: '--font-sans',
-  subsets: ['latin'],
-})
-
-const jetbrainsMono = JetBrains_Mono({
-  variable: '--font-mono',
-  subsets: ['latin'],
-})
 
 export const metadata: Metadata = {
   title: 'ContentForge - AI Content Creation Platform',
@@ -26,9 +15,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="dark">
-      <body
-        className={`${inter.variable} ${jetbrainsMono.variable} font-sans antialiased bg-zinc-950 text-zinc-50`}
-      >
+      <body className="font-sans antialiased bg-zinc-950 text-zinc-50">
         <QueryProvider>{children}</QueryProvider>
       </body>
     </html>

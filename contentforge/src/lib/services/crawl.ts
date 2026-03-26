@@ -19,7 +19,7 @@ async function crawlWithFirecrawl(url: string): Promise<CrawlResult> {
   const { default: FirecrawlApp } = await import('@mendable/firecrawl-js')
   const firecrawl = new FirecrawlApp({ apiKey })
 
-  const result = await firecrawl.scrapeUrl(url, {
+  const result = await (firecrawl as any).scrape(url, {
     formats: ['markdown'],
   }) as any
 
@@ -222,4 +222,43 @@ export async function searchAndCrawl(
   }
 
   return []
+}
+
+/**
+ * Execute a single CrawlJob by ID — reads the job from DB, crawls, updates status.
+ * Used by the crawl API route (fire-and-forget pattern).
+ */
+export async function executeCrawl(crawlJobId: string): Promise<void> {
+  const job = await prisma.crawlJob.findUnique({ where: { id: crawlJobId } })
+  if (!job) throw new Error(`CrawlJob ${crawlJobId} not found`)
+
+  await prisma.crawlJob.update({ where: { id: crawlJobId }, data: { status: 'running' } })
+
+  try {
+    const url = job.sourceUrl || job.query
+    const result = await crawlUrl(url)
+
+    await prisma.crawlJob.update({
+      where: { id: crawlJobId },
+      data: {
+        status: 'completed',
+        rawContent: result.content.substring(0, 100000),
+        cleanedContent: result.content.substring(0, 50000),
+        metadata: JSON.stringify({
+          source: 'crawl',
+          contentLength: result.content.length,
+          crawledAt: new Date().toISOString(),
+        }),
+      },
+    })
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Unknown error'
+    await prisma.crawlJob.update({
+      where: { id: crawlJobId },
+      data: {
+        status: 'failed',
+        metadata: JSON.stringify({ error: message, failedAt: new Date().toISOString() }),
+      },
+    })
+  }
 }
