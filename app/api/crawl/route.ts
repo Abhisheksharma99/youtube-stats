@@ -1,5 +1,23 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/services/db";
+import { executeCrawl } from "@/lib/services/crawl";
+
+export async function GET(request: NextRequest) {
+  try {
+    const projectId = request.nextUrl.searchParams.get("projectId");
+    if (!projectId) {
+      return NextResponse.json({ error: "projectId is required" }, { status: 400 });
+    }
+    const jobs = await prisma.crawlJob.findMany({
+      where: { projectId },
+      orderBy: { createdAt: "desc" },
+    });
+    return NextResponse.json(jobs);
+  } catch (error) {
+    console.error("Failed to fetch crawl jobs:", error);
+    return NextResponse.json({ error: "Failed to fetch crawl jobs" }, { status: 500 });
+  }
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -53,8 +71,18 @@ export async function POST(request: NextRequest) {
       )
     );
 
-    // In production, this would trigger actual crawling workers.
-    // For now, we just return the created pending jobs.
+    // Fire-and-forget: trigger crawling for each job
+    for (const job of crawlJobs) {
+      void executeCrawl(job.id).catch((err) => {
+        console.error(`Crawl job ${job.id} failed:`, err);
+      });
+    }
+
+    // Update project status
+    await prisma.project.update({
+      where: { id: projectId },
+      data: { status: "crawling" },
+    });
 
     return NextResponse.json(crawlJobs, { status: 201 });
   } catch (error) {
