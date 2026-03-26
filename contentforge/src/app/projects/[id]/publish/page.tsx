@@ -98,6 +98,14 @@ export default function PublishPage({
     accounts.filter((a) => a.connected).map((a) => a.platform)
   );
 
+  const isScheduleInPast = (): boolean => {
+    if (!scheduleEnabled || !scheduleDate || !scheduleTime) return false;
+    const scheduled = new Date(`${scheduleDate}T${scheduleTime}`);
+    return scheduled <= new Date();
+  };
+
+  const scheduleInPast = isScheduleInPast();
+
   return (
     <AppShell>
       <div className="mx-auto max-w-4xl space-y-6">
@@ -184,8 +192,12 @@ export default function PublishPage({
               rows={5}
               className="mt-3 w-full rounded-lg border border-zinc-700 bg-zinc-800 px-3 py-2.5 text-sm text-zinc-200 placeholder:text-zinc-500 focus:border-indigo-500 focus:outline-none resize-none"
             />
-            <p className="mt-1.5 text-right text-xs text-zinc-600">
-              {caption.length} characters
+            <p className={cn(
+              "mt-1.5 text-right text-xs",
+              caption.length > 300 ? "text-amber-400 font-medium" : "text-zinc-600"
+            )}>
+              {caption.length}/300 characters
+              {caption.length > 300 && " — Caption may be truncated on some platforms"}
             </p>
           </div>
 
@@ -265,7 +277,7 @@ export default function PublishPage({
           <button
             onClick={() => publishMutation.mutate()}
             disabled={
-              enabledPlatforms.size === 0 || publishMutation.isPending
+              enabledPlatforms.size === 0 || publishMutation.isPending || scheduleInPast
             }
             className="flex items-center gap-2 rounded-lg bg-indigo-600 px-6 py-3 text-sm font-medium text-white hover:bg-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >

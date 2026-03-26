@@ -3,7 +3,7 @@
 import { use, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
-  Image,
+  Image as ImageIcon,
   Video,
   Filter,
   CheckSquare,
@@ -148,7 +148,7 @@ export default function GalleryPage({
           </div>
         ) : filtered.length === 0 ? (
           <div className="flex flex-col items-center justify-center rounded-xl border border-zinc-800 bg-zinc-900/50 py-16">
-            <Image className="h-10 w-10 text-zinc-600" />
+            <ImageIcon className="h-10 w-10 text-zinc-600" />
             <p className="mt-4 text-sm text-zinc-400">
               No media generated yet. Run the pipeline to create content.
             </p>
@@ -188,6 +188,7 @@ export default function GalleryPage({
                         <img
                           src={item.thumbnailUrl}
                           alt={item.filename}
+                          loading="lazy"
                           className="h-full w-full object-cover"
                         />
                       ) : (
@@ -195,7 +196,7 @@ export default function GalleryPage({
                           {item.type === "video" ? (
                             <Video className="h-8 w-8 text-zinc-600" />
                           ) : (
-                            <Image className="h-8 w-8 text-zinc-600" />
+                            <ImageIcon className="h-8 w-8 text-zinc-600" />
                           )}
                         </div>
                       )}
