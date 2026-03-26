@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Plus,
@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { AppShell } from "@/components/layout/app-shell";
+import { EmptyState } from "@/components/ui/empty-state";
 import { cn } from "@/lib/utils/cn";
 
 interface Project {
@@ -31,7 +32,27 @@ export default function ProjectsPage() {
   const [newName, setNewName] = useState("");
   const [newDesc, setNewDesc] = useState("");
   const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const handleSearchChange = useCallback((value: string) => {
+    setSearch(value);
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
+    debounceTimerRef.current = setTimeout(() => {
+      setDebouncedSearch(value);
+    }, 300);
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
+    };
+  }, []);
 
   const { data: projects = [], isLoading } = useQuery<Project[]>({
     queryKey: ["projects"],
@@ -63,7 +84,7 @@ export default function ProjectsPage() {
   const filtered = projects.filter((p) => {
     const matchesSearch = p.name
       .toLowerCase()
-      .includes(search.toLowerCase());
+      .includes(debouncedSearch.toLowerCase());
     const matchesStatus =
       statusFilter === "all" || (p.status ?? "draft") === statusFilter;
     return matchesSearch && matchesStatus;
@@ -97,7 +118,7 @@ export default function ProjectsPage() {
               type="text"
               placeholder="Search projects..."
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(e) => handleSearchChange(e.target.value)}
               className="h-10 w-full rounded-lg border border-zinc-800 bg-zinc-900 pl-9 pr-4 text-sm text-zinc-200 placeholder:text-zinc-500 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500/50"
             />
           </div>
@@ -131,29 +152,28 @@ export default function ProjectsPage() {
             ))}
           </div>
         ) : filtered.length === 0 ? (
-          <div className="flex flex-col items-center justify-center rounded-xl border border-zinc-800 bg-zinc-900/50 py-16">
-            <FolderKanban className="h-10 w-10 text-zinc-600" />
-            <p className="mt-4 text-sm text-zinc-400">
-              {projects.length === 0
-                ? "No projects yet. Create your first one!"
-                : "No projects match your filters."}
-            </p>
-            {projects.length === 0 && (
-              <button
-                onClick={() => setShowModal(true)}
-                className="mt-4 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-500 transition-colors"
-              >
-                Create Project
-              </button>
-            )}
-          </div>
+          <EmptyState
+            icon={FolderKanban}
+            title={projects.length === 0 ? "No projects yet" : "No matches found"}
+            description={
+              projects.length === 0
+                ? "Create your first project to get started!"
+                : "No projects match your current filters. Try adjusting your search or filters."
+            }
+            action={
+              projects.length === 0
+                ? { label: "Create Project", onClick: () => setShowModal(true) }
+                : undefined
+            }
+          />
         ) : (
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {filtered.map((project) => (
+            {filtered.map((project, index) => (
               <Link
                 key={project.id}
                 href={`/projects/${project.id}`}
                 className="group animate-fade-in rounded-xl border border-zinc-800 bg-zinc-900/50 p-5 hover:border-zinc-700 transition-all"
+                style={{ animationDelay: `${index * 100}ms`, opacity: 0, animationFillMode: "forwards" }}
               >
                 <div className="flex items-start justify-between">
                   <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-indigo-600/15">

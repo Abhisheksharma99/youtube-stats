@@ -1,5 +1,7 @@
 import type { Metadata } from 'next'
 import { QueryProvider } from '@/lib/hooks/query-provider'
+import { ErrorBoundary } from '@/components/ui/error-boundary'
+import { ToastProvider } from '@/components/ui/toast'
 import './globals.css'
 
 export const metadata: Metadata = {
@@ -16,7 +18,11 @@ export default function RootLayout({
   return (
     <html lang="en" className="dark">
       <body className="font-sans antialiased bg-zinc-950 text-zinc-50">
-        <QueryProvider>{children}</QueryProvider>
+        <QueryProvider>
+          <ErrorBoundary>
+            <ToastProvider>{children}</ToastProvider>
+          </ErrorBoundary>
+        </QueryProvider>
       </body>
     </html>
   )

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   FolderKanban,
   Video,
@@ -15,6 +16,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { AppShell } from "@/components/layout/app-shell";
+import { SkeletonCard } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils/cn";
 
 interface StatsCard {
@@ -69,7 +71,7 @@ export default function DashboardPage() {
     }
   }, [comfyStatus]);
 
-  const { data: projects } = useQuery({
+  const { data: projects, isLoading: projectsLoading } = useQuery({
     queryKey: ["projects"],
     queryFn: async () => {
       try {
@@ -155,28 +157,37 @@ export default function DashboardPage() {
 
         {/* Stats grid */}
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {stats.map((stat) => {
-            const Icon = stat.icon;
-            return (
-              <div
-                key={stat.label}
-                className="animate-fade-in rounded-xl border border-zinc-800 bg-zinc-900/50 p-5"
-              >
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-zinc-400">{stat.label}</span>
-                  <Icon className={cn("h-5 w-5", stat.color)} />
+          {projectsLoading ? (
+            <>
+              {[0, 1, 2, 3].map((i) => (
+                <SkeletonCard key={i} />
+              ))}
+            </>
+          ) : (
+            stats.map((stat, index) => {
+              const Icon = stat.icon;
+              return (
+                <div
+                  key={stat.label}
+                  className="animate-fade-in rounded-xl border border-zinc-800 bg-zinc-900/50 p-5"
+                  style={{ animationDelay: `${index * 100}ms`, opacity: 0, animationFillMode: "forwards" }}
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-zinc-400">{stat.label}</span>
+                    <Icon className={cn("h-5 w-5", stat.color)} />
+                  </div>
+                  <div className="mt-3 flex items-end justify-between">
+                    <span className="text-2xl font-bold text-zinc-100">
+                      {stat.value}
+                    </span>
+                    {stat.label === "ComfyUI" && (
+                      <ComfyUIStatusBadge online={comfyOnline} />
+                    )}
+                  </div>
                 </div>
-                <div className="mt-3 flex items-end justify-between">
-                  <span className="text-2xl font-bold text-zinc-100">
-                    {stat.value}
-                  </span>
-                  {stat.label === "ComfyUI" && (
-                    <ComfyUIStatusBadge online={comfyOnline} />
-                  )}
-                </div>
-              </div>
-            );
-          })}
+              );
+            })
+          )}
         </div>
 
         {/* ComfyUI Connection Status Card */}
@@ -257,35 +268,44 @@ export default function DashboardPage() {
                   </Link>
                 </div>
               ) : (
-                projectList.slice(0, 5).map(
-                  (project: {
-                    id: string;
-                    name: string;
-                    status?: string;
-                    updatedAt?: string;
-                  }) => (
-                    <Link
-                      key={project.id}
-                      href={`/projects/${project.id}`}
-                      className="flex items-center justify-between px-5 py-3.5 hover:bg-zinc-800/40 transition-colors"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-zinc-800">
-                          <Wand2 className="h-4 w-4 text-indigo-400" />
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium text-zinc-200">
-                            {project.name}
-                          </p>
-                          <p className="text-xs text-zinc-500">
-                            {project.status ?? "draft"}
-                          </p>
-                        </div>
-                      </div>
-                      <ArrowRight className="h-4 w-4 text-zinc-600" />
-                    </Link>
-                  )
-                )
+                <AnimatePresence>
+                  {projectList.slice(0, 5).map(
+                    (project: {
+                      id: string;
+                      name: string;
+                      status?: string;
+                      updatedAt?: string;
+                    }, index: number) => (
+                      <motion.div
+                        key={project.id}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -10 }}
+                        transition={{ delay: index * 0.05, duration: 0.2 }}
+                      >
+                        <Link
+                          href={`/projects/${project.id}`}
+                          className="flex items-center justify-between px-5 py-3.5 hover:bg-zinc-800/40 transition-colors"
+                        >
+                          <div className="flex items-center gap-3">
+                            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-zinc-800">
+                              <Wand2 className="h-4 w-4 text-indigo-400" />
+                            </div>
+                            <div>
+                              <p className="text-sm font-medium text-zinc-200">
+                                {project.name}
+                              </p>
+                              <p className="text-xs text-zinc-500">
+                                {project.status ?? "draft"}
+                              </p>
+                            </div>
+                          </div>
+                          <ArrowRight className="h-4 w-4 text-zinc-600" />
+                        </Link>
+                      </motion.div>
+                    )
+                  )}
+                </AnimatePresence>
               )}
             </div>
           </div>

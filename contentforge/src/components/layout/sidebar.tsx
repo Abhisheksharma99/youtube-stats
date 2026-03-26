@@ -20,8 +20,8 @@ import { cn } from '@/lib/utils/cn'
 const navItems = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/projects', label: 'Projects', icon: FolderKanban },
-  { href: '/projects?tab=gallery', label: 'Gallery', icon: Image },
-  { href: '/settings?tab=social', label: 'Social Accounts', icon: Share2 },
+  { href: '/projects', label: 'Gallery', icon: Image },
+  { href: '/settings', label: 'Social Accounts', icon: Share2 },
   { href: '/settings/comfyui', label: 'ComfyUI Status', icon: Cpu },
   { href: '/settings', label: 'Settings', icon: Settings },
 ]
